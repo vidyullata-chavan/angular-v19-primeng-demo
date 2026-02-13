@@ -1,0 +1,294 @@
+<p-toast />
+<!-- <p-toolbar class="mb-6">
+  <ng-template #start>
+    <p-button
+      severity="danger"
+      label="Delete"
+      icon="pi pi-trash"
+      outlined
+      (onClick)="deleteSelectedRules()"
+      [disabled]="!selectedRules || !selectedRules.length"
+    />
+  </ng-template>
+
+  <ng-template #end>
+    <p-button
+      label="Create New Rule"
+      icon="pi pi-plus"
+      class="mr-2"
+      (onClick)="openNew()"
+    />
+    <p-fileUpload
+      mode="basic"
+      accept="image/*"
+      [maxFileSize]="1000000"
+      label="Import"
+      chooseLabel="Import"
+      auto
+      customUpload
+      class="mr-2 inline-block"
+      [chooseButtonProps]="{ severity: 'secondary' }"
+    />
+    <p-button
+      label="Export"
+      icon="pi pi-upload"
+      severity="secondary"
+      (onClick)="exportCSV($event)"
+    />
+  </ng-template>
+</p-toolbar> -->
+
+<p-table
+  #dt
+  [value]="ruleList"
+  [rows]="5"
+  [columns]="cols"
+  [paginator]="true"
+  [globalFilterFields]="[
+    'ruleName',
+    'status'
+  ]"
+  [tableStyle]="{ 'min-width': '75rem' }"
+  [(selection)]="selectedRules"
+  [rowHover]="true"
+  dataKey="ruleId"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+  [showCurrentPageReport]="true"
+>
+  <ng-template #caption>
+      <div class="flex items-center justify-between">
+        <p-button
+      label="Create New Rule"
+      icon="pi pi-plus"
+      class="mr-2"
+      (onClick)="openNew()"
+    />
+        <p-iconfield>
+          <p-inputicon class="pi pi-search" />
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="dt.filterGlobal(searchTerm, 'contains')"
+            placeholder="Search..."
+          />
+        </p-iconfield>
+      </div>
+    </ng-template>
+  <ng-template #header>
+    <tr>
+      <th></th>
+      <th></th>
+      <!-- <th>
+        <p-tableHeaderCheckbox />
+      </th> -->
+
+      <th>Rule ID</th>
+      <th pSortableColumn="name">
+        <div class="flex items-center gap-2">
+          Rule Name
+          <p-sortIcon field="name" />
+        </div>
+      </th>
+      <th pSortableColumn="isActive">
+        <div class="flex items-center gap-2">
+          Status
+          <p-sortIcon field="isActive" />
+        </div>
+      </th>
+      <th pSortableColumn="isApproved">
+        <div class="flex items-center gap-2">
+          Approval
+          <p-sortIcon field="isApproved" />
+        </div>
+      </th>
+
+      <th></th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-rule let-expanded="expanded">
+    <tr>
+      <td>
+        <p-button
+          type="button"
+          pRipple
+          [pRowToggler]="rule"
+          [text]="true"
+          severity="secondary"
+          [rounded]="true"
+          [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+        />
+      </td>
+      <td>
+        <p-toggleswitch
+          pTooltip="Toggle rule status"
+          class="mr-2"
+          [(ngModel)]="rule.isActive"
+          (click)="toggleRuleStatusByBtn(rule)"
+        />
+      </td>
+      <!-- <td>
+        <p-tableCheckbox [value]="rule" />
+      </td> -->
+
+      <td>
+        {{ rule.ruleId }}
+        <p-button
+          icon="pi pi-eye"
+          class="mr-2"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="getRuleById(rule)"
+        />
+      </td>
+      <td>{{ rule.ruleName }}</td>
+      <td>
+        <p-tag
+          class="cursor-pointer"
+          [value]="rule.isActive ? 'Active' : 'Inactive'"
+          [severity]="getStatusClass(rule.isActive)"
+          (click)="toggleRuleStatus(rule)"
+        />
+      </td>
+
+      <td>
+        <p-tag
+          class="cursor-pointer"
+          [value]="rule.isApproved ? 'Approved' : 'Pending'"
+          [severity]="getApprovedClass(rule.isApproved)"
+          (click)="approveRule(rule)"
+        />
+      </td>
+
+      <td>
+        <p-button
+          icon="pi pi-pencil"
+          class="mr-2"
+          *ngIf="!rule.isDeleted"
+          [rounded]="true"
+          [outlined]="true"
+          (click)="editRule(rule)"
+        />
+        <p-button
+          *ngIf="rule.isDeleted"
+          class="mr-2"
+          icon="pi pi-replay"
+          severity="danger"
+          [rounded]="true"
+          [outlined]="true"
+          pTooltip="Restore"
+          (click)="markAsDeleted(rule, false)"
+        />
+        <p-button
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [outlined]="true"
+          [pTooltip]="rule.isDeleted ? 'Delete Permanently' : 'Mark as Deleted'"
+          (click)="rule.isDeleted ? permanentlyDeleteRule(rule) : markAsDeleted(rule)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #expandedrow let-rule>
+    <tr>
+      <td colspan="7">
+        <div class="p-0">
+          <h5>Details for {{ rule.ruleName }}</h5>
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [(visible)]="ruleDialog"
+  [style]="{ width: '450px' }"
+  header="Rule Details"
+  [modal]="true"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-5">
+      <div>
+        <label for="name" class="block font-bold mb-3">Name</label>
+        <input
+          type="text"
+          pInputText
+          id="name"
+          [(ngModel)]="ruleItem.ruleName"
+          required
+          autofocus
+          fluid
+        />
+        <small class="text-red-500" *ngIf="submitted && !ruleItem.ruleName"
+          >Name is required.</small
+        >
+      </div>
+
+      <div class="flex items-center">
+        <label for="ruleStatus">Mark as active?</label>
+        <p-toggleswitch
+          inputId="ruleStatus"
+          pTooltip="Toggle rule status"
+          class="ml-2 flex "
+          [(ngModel)]="ruleItem.isActive"
+        />
+      </div>
+
+      <!-- <div>
+          <label for="description" class="block font-bold mb-3"
+            >Description</label
+          >
+          <textarea
+            id="description"
+            pTextarea
+            [(ngModel)]="ruleItem.ruleName"
+            required
+            rows="3"
+            cols="20"
+            fluid
+          ></textarea>
+        </div>
+
+        <div>
+          <label for="inventoryStatus" class="block font-bold mb-3"
+            >Inventory Status</label
+          >
+          <p-select
+            [(ngModel)]="ruleItem.ruleName"
+            inputId="inventoryStatus"
+            [options]="['A', 'B', 'C']"
+            optionLabel="label"
+            optionValue="label"
+            placeholder="Select a Status"
+            fluid
+          />
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-6">
+            <label for="price" class="block font-bold mb-3">Price</label>
+            <p-inputnumber
+              id="price"
+              [(ngModel)]="ruleItem.ruleName"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              fluid
+            />
+          </div>
+          <div class="col-span-6">
+            <label for="quantity" class="block font-bold mb-3">Quantity</label>
+            <p-inputnumber id="quantity" [(ngModel)]="ruleItem.ruleName" fluid />
+          </div>
+        </div> -->
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+    <p-button label="Save" icon="pi pi-check" (click)="saveRule()" />
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" />
