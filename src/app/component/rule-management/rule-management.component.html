@@ -1,0 +1,53 @@
+<div class="card">
+  <p-tabs value="0">
+    <p-tablist>
+        <p-tab value="0">
+            <!-- <p-icon-field>
+                <i class="pi pi-check-circle"></i>
+            </p-icon-field> -->
+            All Rules
+        </p-tab>
+        <p-tab value="1">
+            <p-icon-field>
+                <i class="pi pi-check-circle"></i>
+            </p-icon-field>
+            Approved Rules
+        </p-tab>
+        <p-tab value="2">
+            <p-icon-field>
+                <i class="pi pi-clock"></i>
+            </p-icon-field>
+            Pending Approval
+        </p-tab>
+        <p-tab value="3">
+            <p-icon-field>
+                <i class="pi pi-times-circle"></i>
+            </p-icon-field>
+            Inactive Rules
+        </p-tab>
+        <p-tab value="4">
+            <p-icon-field>
+                <i class="pi pi-trash"></i>
+            </p-icon-field>
+            Rule Bin
+        </p-tab>
+    </p-tablist>
+    <p-tabpanels>
+        <p-tabpanel value="0">
+            <app-rule-list [ruleList]="(allRules$ | async) || []"></app-rule-list>
+        </p-tabpanel>
+        <p-tabpanel value="1">
+            <app-rule-list [ruleList]="(approvedRules$ | async) || []"></app-rule-list>
+        </p-tabpanel>
+        <p-tabpanel value="2">
+            <app-rule-list [ruleList]="(pendingApprovalRules$ | async) || []"></app-rule-list>
+        </p-tabpanel>
+        <p-tabpanel value="3">
+            <app-rule-list [ruleList]="(inactiveRules$ | async) || []"></app-rule-list>
+        </p-tabpanel>
+        <p-tabpanel value="4">
+            <app-rule-list [ruleList]="(deletedRules$ | async) || []"></app-rule-list>
+        </p-tabpanel>
+    </p-tabpanels>
+</p-tabs>
+</div>
